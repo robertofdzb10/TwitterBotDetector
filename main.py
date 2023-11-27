@@ -1,46 +1,36 @@
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time
+from selenium.webdriver.common.keys import Keys
+from time import sleep
+import random
 
-# Inicializar el driver de Selenium
-driver = webdriver.Chrome()
+def random_sleep():
+    sleep(random.randint(1, 5))
 
-# Navegar a la página de Twitter
-driver.get("https://twitter.com")
-
-# Esperar a que se cargue la página
-wait = WebDriverWait(driver, 10)
-wait.until(EC.presence_of_element_located((By.NAME, "session[username_or_email]")))
-
-# Iniciar sesión en Twitter
-username_input = driver.find_element(By.NAME, "session[username_or_email]")
-password_input = driver.find_element(By.NAME, "session[password]")
-
-username_input.send_keys("tu_usuario")
-password_input.send_keys("tu_contraseña")
-
-login_button = driver.find_element(By.XPATH, '//div[@data-testid="LoginForm_Login_Button"]')
-login_button.click()
-
-# Esperar a que se cargue la página de inicio
-wait.until(EC.presence_of_element_located((By.XPATH, '//div[@data-testid="tweet"]')))
-
-# Obtener los tweets en la página de inicio
-tweets = driver.find_elements(By.XPATH, '//div[@data-testid="tweet"]')
-
-# Analizar los tweets para detectar bots
-for tweet in tweets:
-    # Aquí puedes implementar tu lógica para detectar bots
-    # Por ejemplo, puedes verificar si el tweet contiene ciertas palabras clave o si el usuario tiene un número excesivo de seguidores
-
-    # Imprimir el contenido del tweet
-    print(tweet.text)
+# Configura el driver de Selenium (en este caso, para Chrome)
+driver = webdriver.Chrome('/usr/local/bin/chromedriver')
 
 
+# Abre Twitter
+driver.get('https://www.twitter.com')
 
-# Cerrar el navegador
+# Inicia sesión en Twitter (opcional, dependiendo de tus necesidades)
+# Ten en cuenta que deberás manejar la autenticación y sus posibles variantes
+username_field = driver.find_element_by_name('session[username_or_email]')
+password_field = driver.find_element_by_name('session[password]')
+
+username_field.send_keys('roberwianitxas')
+password_field.send_keys('Nuncameacuerdo123')
+password_field.send_keys(Keys.RETURN)
+
+random_sleep()
+
+# Navega a un perfil de usuario específico o realiza una búsqueda
+driver.get('https://www.twitter.com/usuario_especifico')
+
+random_sleep()
+
+# Aquí podrías agregar tu lógica para analizar el perfil/tweets y detectar posibles bots
+# Por ejemplo, revisar la frecuencia de los tweets, la relación seguidores/seguimientos, etc.
+
+# Recuerda cerrar el navegador al final
 driver.quit()
-
-#sleep randons de 1 a 5 s
