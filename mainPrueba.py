@@ -15,6 +15,9 @@ def convert_to_absolute_number(text):
     if 'K' in text:
         # Reemplaza la coma por un punto para manejar decimales, elimina la 'K' y multiplica por 1,000
         return int(float(text.replace('K', '')) * 1000)
+    elif ',' in text:
+        # Reemplaza la coma 
+        return int(float(text.replace(',', '')) * 1000)
     elif 'M' in text:
         # Reemplaza la coma por un punto para manejar decimales, elimina la 'M' y multiplica por 1,000,000
         return int(float(text.replace('M', '')) * 1000000)
@@ -83,7 +86,7 @@ except Exception as e:
 
 
 # Navega al perfil de Twitter que deseas analizar
-perfil_usuario = 'FlagsMashupBot'  # Reemplaza con el nombre de usuario del perfil a analizar
+perfil_usuario = 'jonbraylock'  # Reemplaza con el nombre de usuario del perfil a analizar
 driver.get(f'https://twitter.com/{perfil_usuario}')
 random_sleep()  # Espera aleatoria después de presionar ENTER
 
@@ -103,6 +106,78 @@ try:
     print(es_posible_bot(followers, following))
 except Exception as e:
     print("Hubo un error extrayendo la información del perfil:", e)
+
+#Continuación 
+
+# Navegar a la página de comentarios
+
+# Navegar al tweet más reciente
+try:
+    # Encuentra el enlace al tweet más reciente basado en el elemento 'time'
+    enlace_tweet_reciente = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, "//a[.//time]"))
+    )
+    enlace_tweet_reciente.click()
+    random_sleep()
+except Exception as e:
+    print("No se pudo acceder al tweet más reciente:", e)
+
+# Recoger la lista de usuarios que han comentado en el tweet
+usuarios_comentarios = []
+try:
+    # Espera hasta que los comentarios estén cargados
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_all_elements_located((By.XPATH, "//article[@data-testid='tweet']"))
+    )
+    comentarios = driver.find_elements(By.XPATH, "//div[@data-testid='reply']")
+    comentarios = driver.find_elements(By.XPATH, "//div[@data-testid='User-Name']")
+    for comentario in comentarios:
+        # Encuentra el nombre de usuario en cada comentario
+        try:
+            span_usuario = comentario.find_element(By.XPATH, ".//span[contains(text(), '@')]")
+            nombre_usuario = span_usuario.text.lstrip('@')  # Elimina el símbolo '@'
+            if nombre_usuario not in usuarios_comentarios:
+                usuarios_comentarios.append(nombre_usuario)
+        except Exception as e:
+            print("No se pudo encontrar el nombre de usuario en un comentario:", e)
+    random_sleep()
+    usuarios_comentarios.remove(perfil_usuario)  # Elimina el nombre de usuario del perfil de la lista
+except Exception as e:
+    print("Error al recopilar usuarios que comentaron:", e)
+
+# Imprime o procesa la lista de usuarios
+print("Usuarios que comentaron:", usuarios_comentarios)
+
+
+
+# Analizar cada perfil de usuario
+bots_sospechosos = []
+for usuario in usuarios_comentarios:
+    driver.get(f'https://twitter.com/{usuario}')
+    random_sleep()
+    # Espera hasta que la página del perfil cargue
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, "//div[@data-testid='UserProfileHeader_Items']"))
+    )
+    random_sleep()  # Espera aleatoria después de presionar ENTER
+    try:
+        # Extraer seguidores y seguidos del perfil
+        # Número de Seguidores
+        followers = convert_to_absolute_number(driver.find_element(By.XPATH, "//a[contains(@href,'/verified_followers')]//span[1]").text)
+        # Número de Siguiendo
+        following = convert_to_absolute_number(driver.find_element(By.XPATH, "//a[contains(@href,'/following')]//span[1]").text)
+        random_sleep()  # Espera aleatoria después de presionar ENTER
+        # Determinar si el perfil es un posible bot
+        if es_posible_bot(followers, following):
+            bots_sospechosos.append(usuario)
+    except Exception as e:
+        print(f"Error al analizar el perfil de {usuario}:", e)
+
+# Imprimir lista de bots sospechosos
+print("Usuarios sospechosos de ser bots:", bots_sospechosos)
+
+# Cierra el navegador después de realizar las operaciones necesarias
+driver.quit()
 
 # Cierra el navegador después de realizar las operaciones necesarias
 driver.quit()
