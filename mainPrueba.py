@@ -17,7 +17,7 @@ def convert_to_absolute_number(text):
         return int(float(text.replace('K', '')) * 1000)
     elif ',' in text:
         # Reemplaza la coma 
-        return int(float(text.replace(',', '')) * 1000)
+        return int(float(text.replace(',', '')))
     elif 'M' in text:
         # Reemplaza la coma por un punto para manejar decimales, elimina la 'M' y multiplica por 1,000,000
         return int(float(text.replace('M', '')) * 1000000)
@@ -37,6 +37,7 @@ def es_posible_bot(followers, following):
 
 # Configura el driver de Selenium
 driver = webdriver.Chrome()
+
 
 # Abre Twitter
 driver.get('https://www.twitter.com')
@@ -147,6 +148,7 @@ except Exception as e:
 
 # Imprime o procesa la lista de usuarios
 print("Usuarios que comentaron:", usuarios_comentarios)
+print()
 
 
 
@@ -169,15 +171,17 @@ for usuario in usuarios_comentarios:
         random_sleep()  # Espera aleatoria después de presionar ENTER
         # Determinar si el perfil es un posible bot
         if es_posible_bot(followers, following):
+            print(f"El perfil de {usuario} parece ser un bot.")
+            print("Seguidores del perfil:", followers)
+            print("Siguiendo del perfil:", following)
+            print("Proporción de seguidores a seguidos:", followers / following)
+            print()
             bots_sospechosos.append(usuario)
     except Exception as e:
         print(f"Error al analizar el perfil de {usuario}:", e)
 
 # Imprimir lista de bots sospechosos
 print("Usuarios sospechosos de ser bots:", bots_sospechosos)
-
-# Cierra el navegador después de realizar las operaciones necesarias
-driver.quit()
 
 # Cierra el navegador después de realizar las operaciones necesarias
 driver.quit()
