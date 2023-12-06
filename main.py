@@ -195,7 +195,11 @@ try:
             descripcion = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, xpath_descripcion)))
         except:
             descripcion = False
-        if es_posible_bot(usuario, followers, following, tweets, cuenta_verificada, descripcion):
+        elemento_creation_date = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, creation_date_xpath))).text.split('Joined ')[1]
+        cretation_date = time.strptime(elemento_creation_date, '%B %Y')
+        year = cretation_date.tm_year
+        month = cretation_date.tm_mon
+        if es_posible_bot(usuario, followers, following, tweets, cuenta_verificada, descripcion, year, month):
             bots_sospechosos.append(usuario)
     print("Usuarios sospechosos de ser bots:", bots_sospechosos) #TODO - Mostrar en una ventana de Tkinter
 
