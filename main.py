@@ -1,3 +1,4 @@
+import datetime
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -29,6 +30,7 @@ reply_xpath = "//article[@data-testid='tweet']"
 load_more_button_xpath = "//button[text()='Show more replies']"
 xpath_cuenta_verificada = "//div[@aria-label='Provides details about verified accounts.']"
 xpath_descripcion = "//div[@data-testid='UserDescription']"
+creation_date_xpath = "//span[@data-testid='UserJoinDate']"
 
 
 # Funciones auxiliares
@@ -43,11 +45,11 @@ def convert_to_absolute_number(text):
     else:
         return int(text.replace(',', ''))
 
-def es_posible_bot(usuario, followers, following, tweets, cuenta_verificada, description):
+def es_posible_bot(usuario, followers, following, tweets, cuenta_verificada, description, year, month):
     umbral = 1
     puntaje = 0
 
-    if  cuenta_verificada: #Si la cuenta está verificada, no es un bot
+    if cuenta_verificada: #Si la cuenta está verificada, no es un bot
         return False
     
     elif 'bot' in usuario.lower(): # Si el nombre de usuario contiene la palabra "bot", es un bot
@@ -65,6 +67,13 @@ def es_posible_bot(usuario, followers, following, tweets, cuenta_verificada, des
         # Criterio 3: Número muy alto de tweets (esto podría indicar actividad automatizada)
         if followers < 200 and tweets > 10000:
             puntaje += 0.5
+            if year == datetime.datetime.now().year:
+                return True
+        
+        if year == datetime.datetime.now().year:
+            puntaje += 0.5
+            if month == datetime.datetime.now().month:
+                puntaje += 0.25
 
         if description == False:
             puntaje += 0.5
@@ -72,7 +81,6 @@ def es_posible_bot(usuario, followers, following, tweets, cuenta_verificada, des
         # Comprueba si el puntaje supera el umbral
         return puntaje >= umbral
 
-        #baja tasa de interacción y fecha de creación de la cuenta reciente
 # Inicio del script Selenium
 driver = webdriver.Chrome()
 
@@ -80,8 +88,7 @@ try:
     # Abre Twitter y acepta cookies
     driver.get(TWITTER_URL)
     random_sleep()
-    cookies_accept_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, cookies_button_xpath)))
+    cookies_accept_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, cookies_button_xpath)))
     cookies_accept_button.click()
     random_sleep()
 
@@ -114,12 +121,18 @@ try:
     except:
         descripcion = False
 
+    elemento_creation_date = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, creation_date_xpath))).text.split('Joined ')[1]
+    cretation_date = time.strptime(elemento_creation_date, '%B %Y')
+    year = cretation_date.tm_year
+    month = cretation_date.tm_mon
+    print("Fecha de creación de la cuenta:", cretation_date)
+
     followers = convert_to_absolute_number(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, followers_xpath))).text)
     following = convert_to_absolute_number(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, following_xpath))).text)
     elemento_tweets = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, tweets_xpath)))
     texto_tweets = elemento_tweets.text.split(" posts")[0]
     tweets = convert_to_absolute_number(texto_tweets)
-    if es_posible_bot(PERFIL_ANALIZAR, followers, following, tweets, cuenta_verificada, descripcion):
+    if es_posible_bot(PERFIL_ANALIZAR, followers, following, tweets, cuenta_verificada, descripcion, year, month):
         print(f'El perfil {PERFIL_ANALIZAR} podría ser un bot.')
     else:
         print(f'El perfil {PERFIL_ANALIZAR} parece ser un usuario real.')
@@ -182,7 +195,6 @@ try:
             descripcion = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, xpath_descripcion)))
         except:
             descripcion = False
-        print("La cuenta no tiene descripción o no se pudo verificar.")
         if es_posible_bot(usuario, followers, following, tweets, cuenta_verificada, descripcion):
             bots_sospechosos.append(usuario)
     print("Usuarios sospechosos de ser bots:", bots_sospechosos) #TODO - Mostrar en una ventana de Tkinter
